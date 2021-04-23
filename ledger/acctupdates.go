@@ -684,6 +684,11 @@ func (au *accountUpdates) committedUpTo(committedRound basics.Round) (retRound b
 
 	offset = uint64(newBase - au.dbRound)
 
+<<<<<<< HEAD
+=======
+	offset = au.consecutiveVersion(offset)
+
+>>>>>>> 0b885fe3... ledger: fix consensus version flushes incorrectly (#2096)
 	// check to see if this is a catchpoint round
 	isCatchpointRound = ((offset + uint64(lookback+au.dbRound)) > 0) && (au.catchpointInterval != 0) && (0 == (uint64((offset + uint64(lookback+au.dbRound))) % au.catchpointInterval))
 
@@ -716,6 +721,22 @@ func (au *accountUpdates) committedUpTo(committedRound basics.Round) (retRound b
 		au.accountsWriting.Add(1)
 	}
 	return
+}
+
+func (au *accountUpdates) consecutiveVersion(offset uint64) uint64 {
+	// check if this update chunk spans across multiple consensus versions. If so, break it so that each update would tackle only a single
+	// consensus version.
+	if au.versions[1] != au.versions[offset] {
+		// find the tip point.
+		tipPoint := sort.Search(int(offset), func(i int) bool {
+			// we're going to search here for version inequality, with the assumption that consensus versions won't repeat.
+			// that allow us to support [ver1, ver1, ..., ver2, ver2, ..., ver3, ver3] but not [ver1, ver1, ..., ver2, ver2, ..., ver1, ver3].
+			return au.versions[1] != au.versions[1+i]
+		})
+		// no need to handle the case of "no found", or tipPoint==int(offset), since we already know that it's there.
+		offset = uint64(tipPoint)
+	}
+	return offset
 }
 
 // newBlock is the accountUpdates implementation of the ledgerTracker interface. This is the "external" facing function
@@ -1881,6 +1902,15 @@ func (au *accountUpdates) commitRound(offset uint64, dbRound basics.Round, lookb
 
 	// adjust the offset according to what happened meanwhile..
 	offset -= uint64(au.dbRound - dbRound)
+
+	// if this iteration need to flush out zero rounds, just return right away.
+	// this usecase can happen when two subsequent calls to committedUpTo concludes that the same rounds range need to be
+	// flush, without the commitRound have a chance of committing these rounds.
+	if offset == 0 {
+		au.accountsMu.RUnlock()
+		return
+	}
+
 	dbRound = au.dbRound
 
 	newBase := basics.Round(offset) + dbRound
@@ -1895,7 +1925,18 @@ func (au *accountUpdates) commitRound(offset uint64, dbRound basics.Round, lookb
 	copy(deltas, au.deltas[:offset])
 	copy(creatableDeltas, au.creatableDeltas[:offset])
 	copy(roundTotals, au.roundTotals[:offset+1])
+<<<<<<< HEAD
 	copy(protos, au.protos[:offset+1])
+=======
+
+	// verify version correctness : all the entries in the au.versions[1:offset+1] should have the *same* version, and the committedUpTo should be enforcing that.
+	if au.versions[1] != au.versions[offset] {
+		au.accountsMu.RUnlock()
+		au.log.Errorf("attempted to commit series of rounds with non-uniform consensus versions")
+		return
+	}
+	consensusVersion := au.versions[1]
+>>>>>>> 0b885fe3... ledger: fix consensus version flushes incorrectly (#2096)
 
 	var committedRoundDigest crypto.Digest
 
