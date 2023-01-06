@@ -184,13 +184,11 @@ rebuild_kmd_swagger: deps
 # get around a bug in go build where it will fail
 # to cache binaries from time to time on empty NFS
 # dirs
-build: check-go-version crypto/libs/$(OS_TYPE)/$(ARCH)/lib/libsodium.a node_exporter NONGO_BIN
+build: crypto/libs/$(OS_TYPE)/$(ARCH)/lib/libsodium.a node_exporter NONGO_BIN
+	./scripts/check_golang_version.sh build && \
 	mkdir -p "${GOCACHE}" && \
 	touch "${GOCACHE}"/file.txt && \
 	go install $(GOTRIMPATH) $(GOTAGS) $(GOBUILDMODE) -ldflags="$(GOLDFLAGS)" ./...
-
-check-go-version:
-	./scripts/check_golang_version.sh build
 
 ## Build binaries with the race detector enabled in them.
 ## This allows us to run e2e tests with race detection.
@@ -302,7 +300,7 @@ dump: $(addprefix gen/,$(addsuffix /genesis.dump, $(NETWORKS)))
 install: build
 	scripts/dev_install.sh -p $(GOPATH1)/bin
 
-.PHONY: default fmt lint sanity cover prof deps build test fulltest shorttest clean cleango deploy node_exporter install %gen gen NONGO_BIN check-go-version rebuild_kmd_swagger
+.PHONY: default fmt lint sanity cover prof deps build test fulltest shorttest clean cleango deploy node_exporter install %gen gen NONGO_BIN rebuild_kmd_swagger
 
 ###### TARGETS FOR CICD PROCESS ######
 include ./scripts/release/mule/Makefile.mule
