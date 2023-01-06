@@ -62,7 +62,6 @@ make integration
 make fmt
 make lint
 make fix
-make vet
 ```
 or alternatively
 ```bash
