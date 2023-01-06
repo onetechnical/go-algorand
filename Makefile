@@ -231,9 +231,7 @@ integration: build-race
 
 testall: fulltest integration
 
-clean:
-	go clean -i ./...
-	rm -f $(GOPATH1)/bin/node_exporter
+clean: cleango
 	cd crypto/libsodium-fork && \
 		test ! -e Makefile || make clean
 	rm -rf crypto/lib
