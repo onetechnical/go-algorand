@@ -145,20 +145,17 @@ deps:
 # artifacts
 
 # Regenerate kmd swagger spec files
-KMD_API_SWAGGER_SPEC := daemon/kmd/api/swagger.json
-KMD_API_FILES := $(shell find daemon/kmd/api -type f | grep -v $(KMD_API_SWAGGER_SPEC))
-KMD_API_SWAGGER_WRAPPER := kmdSwaggerWrappers.go
-KMD_API_SWAGGER_INJECT := daemon/kmd/lib/kmdapi/bundledSpecInject.go
+KMD_API_FILES := $(shell find daemon/kmd/api -type f | grep -v daemon/kmd/api/swagger.json)
 
-$(KMD_API_SWAGGER_SPEC): $(KMD_API_FILES) crypto/libs/$(OS_TYPE)/$(ARCH)/lib/libsodium.a
+daemon/kmd/api/swagger.json: $(KMD_API_FILES) crypto/libs/$(OS_TYPE)/$(ARCH)/lib/libsodium.a
 	cd daemon/kmd/lib/kmdapi && \
-		python3 genSwaggerWrappers.py $(KMD_API_SWAGGER_WRAPPER)
+		python3 genSwaggerWrappers.py kmdSwaggerWrappers.go
 	cd daemon/kmd && \
 		PATH=$(GOPATH1)/bin:$$PATH \
 		go generate ./...
-	rm daemon/kmd/lib/kmdapi/$(KMD_API_SWAGGER_WRAPPER)
+	rm daemon/kmd/lib/kmdapi/kmdSwaggerWrappers.go
 
-%/swagger.json.validated: %/swagger.json
+daemon/kmd/api/swagger.json.validated: daemon/kmd/api/swagger.json
 	@problem=$$(cat $< | jq -c '.definitions[].properties | select(. != null) | with_entries(select(.value.type=="array" and .value.items.format=="uint8")) | select(. != {}) | keys[]'); \
 	if [ "$${problem}" != "" ]; then \
 		echo "detected uint8 array in $<:\n$${problem}\nDid you mean to use \"type: string, format: byte\"?"; \
@@ -168,18 +165,18 @@ $(KMD_API_SWAGGER_SPEC): $(KMD_API_FILES) crypto/libs/$(OS_TYPE)/$(ARCH)/lib/lib
 		touch $@; \
 	fi
 
-$(KMD_API_SWAGGER_INJECT): deps $(KMD_API_SWAGGER_SPEC) $(KMD_API_SWAGGER_SPEC).validated
+daemon/kmd/lib/kmdapi/bundledSpecInject.go: deps daemon/kmd/api/swagger.json daemon/kmd/api/swagger.json.validated
 	./daemon/kmd/lib/kmdapi/bundle_swagger_json.sh
 
 # generated files we should make sure we clean
 GENERATED_FILES := \
-	$(KMD_API_SWAGGER_INJECT) \
-	$(KMD_API_SWAGGER_SPEC) $(KMD_API_SWAGGER_SPEC).validated
+	daemon/kmd/lib/kmdapi/bundledSpecInject.go \
+	daemon/kmd/api/swagger.json daemon/kmd/api/swagger.json.validated
 
 rebuild_kmd_swagger: deps
 	rm -f $(GENERATED_FILES)
 	# we need to invoke the make here since we want to ensure that the deletion and re-creating are sequential
-	make $(KMD_API_SWAGGER_INJECT)
+	make daemon/kmd/lib/kmdapi/bundledSpecInject.go
 
 # develop
 
