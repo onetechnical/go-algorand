@@ -85,7 +85,7 @@ GOLDFLAGS := $(GOLDFLAGS_BASE) \
 UNIT_TEST_SOURCES := $(sort $(shell GOPATH=$(GOPATH) && GO111MODULE=off && go list ./... | grep -v /go-algorand/test/ ))
 ALGOD_API_PACKAGES := $(sort $(shell GOPATH=$(GOPATH) && GO111MODULE=off && cd daemon/algod/api; go list ./... ))
 
-MSGP_GENERATE	:= ./protocol ./protocol/test ./crypto ./crypto/merklearray ./crypto/merklesignature ./crypto/stateproof ./data/basics ./data/transactions ./data/stateproofmsg ./data/committee ./data/bookkeeping ./data/hashable ./agreement ./rpcs ./node ./ledger ./ledger/ledgercore ./ledger/store ./ledger/encoded ./stateproof ./data/account ./daemon/algod/api/spec/v2
+MSGP_GENERATE	:= ./agreement ./crypto ./crypto/merklearray ./crypto/merklesignature ./crypto/stateproof ./daemon/algod/api/spec/v2 ./data/account ./data/basics ./data/bookkeeping ./data/committee ./data/hashable ./data/stateproofmsg ./data/transactions ./ledger ./ledger/encoded ./ledger/ledgercore ./ledger/store ./node ./protocol ./protocol/test ./rpcs ./stateproof
 
 default: build
 
