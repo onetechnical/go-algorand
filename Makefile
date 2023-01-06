@@ -146,7 +146,7 @@ deps:
 
 # Regenerate kmd swagger spec files
 KMD_API_SWAGGER_SPEC := daemon/kmd/api/swagger.json
-KMD_API_FILES := $(shell find daemon/kmd/api/ -type f | grep -v $(KMD_API_SWAGGER_SPEC))
+KMD_API_FILES := $(shell find daemon/kmd/api -type f | grep -v $(KMD_API_SWAGGER_SPEC))
 KMD_API_SWAGGER_WRAPPER := kmdSwaggerWrappers.go
 KMD_API_SWAGGER_INJECT := daemon/kmd/lib/kmdapi/bundledSpecInject.go
 
