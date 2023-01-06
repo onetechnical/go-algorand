@@ -253,7 +253,7 @@ node_exporter: $(GOPATH1)/bin/node_exporter
 $(GOPATH1)/bin/node_exporter:
 	mkdir -p $(GOPATH1)/bin && \
 	cd $(GOPATH1)/bin && \
-	tar -xzvf $(SRCPATH)/installer/external/node_exporter-stable-$(shell ./scripts/ostype.sh)-$(shell uname -m | tr '[:upper:]' '[:lower:]').tar.gz && \
+	tar -xzvf $(SRCPATH)/installer/external/node_exporter-stable-$(OS_TYPE)-$(shell uname -m | tr '[:upper:]' '[:lower:]').tar.gz && \
 	cd -
 
 # deploy
