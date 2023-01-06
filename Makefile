@@ -101,9 +101,6 @@ fix: build
 lint: deps
 	$(GOPATH1)/bin/golangci-lint run -c .golangci.yml
 
-check_shell:
-	find . -type f -name "*.sh" -exec shellcheck {} +
-
 sanity: fix lint fmt
 
 cover:
@@ -308,7 +305,7 @@ dump: $(addprefix gen/,$(addsuffix /genesis.dump, $(NETWORKS)))
 install: build
 	scripts/dev_install.sh -p $(GOPATH1)/bin
 
-.PHONY: default fmt lint check_shell sanity cover prof deps build test fulltest shorttest clean cleango deploy node_exporter install %gen gen NONGO_BIN check-go-version rebuild_kmd_swagger
+.PHONY: default fmt lint sanity cover prof deps build test fulltest shorttest clean cleango deploy node_exporter install %gen gen NONGO_BIN check-go-version rebuild_kmd_swagger
 
 ###### TARGETS FOR CICD PROCESS ######
 include ./scripts/release/mule/Makefile.mule
