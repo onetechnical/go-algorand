@@ -11,6 +11,7 @@ endif
 SRCPATH     := $(shell pwd)
 ARCH        := $(shell ./scripts/archtype.sh)
 OS_TYPE     := $(shell ./scripts/ostype.sh)
+OSARCH_TYPE := $(OS_TYPE)/$(ARCH)
 S3_RELEASE_BUCKET = $$S3_RELEASE_BUCKET
 
 # If build number already set, use it - to ensure same build number across multiple platforms being built
@@ -259,7 +260,7 @@ $(GOPATH1)/bin/node_exporter:
 # deploy
 
 deploy:
-	scripts/deploy_dev.sh
+	./scripts/deploy_version.sh $(BUILDBRANCH) $(OSARCH_TYPE)
 
 .PRECIOUS: gen/%/genesis.json
 
@@ -302,9 +303,6 @@ install: build
 
 ###### TARGETS FOR CICD PROCESS ######
 include ./scripts/release/mule/Makefile.mule
-
-archive:
-	aws s3 cp tmp/node_pkgs s3://algorand-internal/channel/$(CHANNEL)/$(FULLBUILDNUMBER) --recursive --exclude "*" --include "*$(FULLBUILDNUMBER)*"
 
 build_custom_linters:
 	cd $(SRCPATH)/cmd/partitiontest_linter/ && go build -buildmode=plugin -trimpath plugin/plugin.go && ls plugin.so
