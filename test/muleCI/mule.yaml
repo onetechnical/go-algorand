@@ -92,8 +92,8 @@ agents:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   - name: docker-ubuntu-signer
-    dockerFilePath: docker/build/docker.ubuntu.Dockerfile
-    image: algorand/go-algorand-docker-linux-ubuntu
+    dockerFilePath: docker/build/aptly.Dockerfile
+    image: algorand/aptly
     version: scripts/configure_dev-deps.sh
     env:
       - TRAVIS_BRANCH=${GIT_BRANCH}
@@ -101,12 +101,11 @@ agents:
       - VERSION=$VERSION
       - BUILD_NUMBER=$BUILD_NUMBER
       - GOHOSTARCH=amd64
-    buildArgs:
-      - GOLANG_VERSION=`./scripts/get_golang_version.sh`
     volumes:
       - $XDG_RUNTIME_DIR/gnupg/S.gpg-agent:/root/.gnupg/S.gpg-agent
       - $HOME/.gnupg/pubring.kbx:/root/.gnupg/pubring.kbx
-
+      - $HOME/.gnupg/secring.gpg:/root/.gnupg/secring.gpg
+    workDir: $HOME/projects/go-algorand
 tasks:
   - task: shell.Make
     name: build.darwin-arm64
