@@ -246,15 +246,9 @@ jobs:
       - docker.Make.deb.amd64
       - docker.Make.rpm.amd64
       - stash.Stash.packages
-  archive-all:
-    tasks:
-      - stash.Unstash.packages
-      - docker.Make.archive
   package-docker:
     tasks:
       - docker.Make.docker-image
-  sign-all:
+  unstash-all:
     tasks:
       - stash.Unstash.packages
-      - docker.Make.docker-sign
-      - stash.Stash.packages
