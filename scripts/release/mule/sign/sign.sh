@@ -82,12 +82,12 @@ for os in "${OS_TYPES[@]}"; do
 
                 for file in *.tar.gz *.deb
                 do
-                    gpg -u "$SIGNING_KEY_ADDR" --detach-sign "$file"
+                    gpg --no-tty -u "$SIGNING_KEY_ADDR" --detach-sign "$file"
                 done
 
                 for file in *.rpm
                 do
-                    gpg -u rpm@algorand.com --detach-sign "$file"
+                    gpg --no-tty -u rpm@algorand.com --detach-sign "$file"
                 done
 
                 HASHFILE="hashes_${CHANNEL}_${os}_${arch}_${VERSION}"
@@ -95,12 +95,12 @@ for os in "${OS_TYPES[@]}"; do
                 shasum -a 256 *.tar.gz *.deb *.rpm >> "$HASHFILE"
                 shasum -a 512 *.tar.gz *.deb *.rpm >> "$HASHFILE"
 
-                gpg -u "$SIGNING_KEY_ADDR" --detach-sign "$HASHFILE"
-                gpg -u "$SIGNING_KEY_ADDR" --clearsign "$HASHFILE"
+                gpg --no-tty -u "$SIGNING_KEY_ADDR" --detach-sign "$HASHFILE"
+                gpg --no-tty -u "$SIGNING_KEY_ADDR" --clearsign "$HASHFILE"
 
                 STATUSFILE="build_status_${CHANNEL}_${os}-${arch}_${VERSION}"
                 if [[ -f "$STATUSFILE" ]]; then
-                    gpg -u "$SIGNING_KEY_ADDR" --clearsign "$STATUSFILE"
+                    gpg --no-tty -u "$SIGNING_KEY_ADDR" --clearsign "$STATUSFILE"
                     gzip -c "$STATUSFILE.asc" > "$STATUSFILE.asc.gz"
                 fi
             )
