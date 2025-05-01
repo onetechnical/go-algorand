@@ -81,7 +81,7 @@ jobs:
           make ci-build
       - name: Generate checksums
         run: |
-          SUMFILE=hashes_${CHANNEL:-$(compute_branch_channel.sh $(./scripts/compute_branch.sh))_{{ runner.os }}_${{ runner.arch }}_$(./script/compute_build_number.sh -f)}
+          SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))_{{ runner.os }}_${{ runner.arch }}_$(./scripts/compute_build_number.sh -f)}
           pushd
           cd tmp/node_pkgs/${{ matrix.os }}/${{ runner.arch }}
           find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; > SUMFILE
@@ -128,7 +128,7 @@ jobs:
         make ci-build-universal
     - name: Generate checksums
       run: |
-        SUMFILE=hashes_${CHANNEL:-$(compute_branch_channel.sh $(./scripts/compute_branch.sh))_darwin_universal_$(./script/compute_build_number.sh -f)}
+        SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))_darwin_universal_$(./scripts/compute_build_number.sh -f)}
         pushd
         cd tmp/node_pkgs/darwin/universal
         find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; > SUMFILE
