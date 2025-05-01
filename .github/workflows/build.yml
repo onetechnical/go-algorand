@@ -82,12 +82,11 @@ jobs:
       - name: Generate checksums
         run: |
           SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))_{{ runner.os }}_${{ runner.arch }}_$(./scripts/compute_build_number.sh -f)}
-          pushd
-          cd tmp/node_pkgs/${{ matrix.os }}/${{ runner.arch }}
-          find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; > SUMFILE
-          find . -type f -name "*.tar.gz" -exec sh -c 'sha256sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
-          find . -type f -name "*.tar.gz" -exec sh -c 'sha512sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
-          popd
+          ( cd tmp/node_pkgs/${{ matrix.os }}/${{ runner.arch }}
+            find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; > SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'sha256sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'sha512sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
+          )
       - name: Upload artifacts to Github
         uses: actions/upload-artifact@v4
         with:
@@ -129,12 +128,11 @@ jobs:
     - name: Generate checksums
       run: |
         SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))_darwin_universal_$(./scripts/compute_build_number.sh -f)}
-        pushd
-        cd tmp/node_pkgs/darwin/universal
-        find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; > SUMFILE
-        find . -type f -name "*.tar.gz" -exec sh -c 'sha256sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
-        find . -type f -name "*.tar.gz" -exec sh -c 'sha512sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
-        popd
+        ( cd tmp/node_pkgs/darwin/universal
+          find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; > SUMFILE
+          find . -type f -name "*.tar.gz" -exec sh -c 'sha256sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
+          find . -type f -name "*.tar.gz" -exec sh -c 'sha512sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
+        )
     - name: Upload artifacts to Github
       uses: actions/upload-artifact@v4
       with:
