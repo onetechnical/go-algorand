@@ -52,7 +52,10 @@ jobs:
       #     curl -X POST --data-urlencode "payload={\"text\": \"Build windows failed. ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} \"}" $SLACK_WEBHOOK
       #   if: ${{ failure() && (contains(github.ref_name, 'rel/nightly') || contains(github.ref_name, 'rel/beta') || contains(github.ref_name, 'rel/stable') || contains(github.ref_name, 'master')) }}
   build-linux:
-    runs-on: ubuntu-2404
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ "ubuntu-2404", "ubuntu-24.04-arm" ]
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -85,6 +88,10 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Determine Go version
       id: go_version
       run: echo "GO_VERSION=$(./scripts/get_golang_version.sh)" >> $GITHUB_ENV
