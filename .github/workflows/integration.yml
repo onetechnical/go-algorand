@@ -1,4 +1,4 @@
-name: Makefile CI
+name: Run Short Tests
 
 on:
   push:
@@ -26,6 +26,6 @@ jobs:
     - name: Install buildtools
       run: ./scripts/buildtools/install_buildtools.sh
   
-    - name: Run integration tests
-      run: make integration
+    - name: Run tests
+      run: make shorttest
 
