@@ -51,6 +51,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
+          overwrite: true
           path: |
             tmp/node_pkgs/windows/amd64/*.tar.gz
             tmp/node_pkgs/windows/amd64/hashes*
@@ -100,6 +101,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
+          overwrite: true
           path: |
             tmp/node_pkgs/**/*.tar.gz
             tmp/node_pkgs/**/hashes*
@@ -145,6 +147,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         if-no-files-found: error
+        overwrite: true
         path: |
           tmp/node_pkgs/darwin/universal/*.tar.gz
           tmp/node_pkgs/darwin/universal/hashes*
