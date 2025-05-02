@@ -21,6 +21,10 @@ while [ "$1" != "" ]; do
             shift
             MAKE_UNIVERSAL_OPTION="1"
             ;;
+        --make_cibuild)
+            shift
+            MAKE_CIBUILD_OPTION="1"
+            ;;
         *)
             echo "Unknown option" "$1"
             exit 1
@@ -92,6 +96,9 @@ if [ "${MAKE_UNIVERSAL_OPTION}" != "" ]; then
 elif [ "${MAKE_DEBUG_OPTION}" != "" ]; then
     make build build-race
     duration "make build build-race"
+elif [ "${MAKE_CIBUILD_OPTION}" != "" ]; then
+    make ci-build
+    duration "make ci-build"
 else
     make build
     duration "make build"
