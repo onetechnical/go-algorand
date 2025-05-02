@@ -82,9 +82,9 @@ jobs:
         run: |
           SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))}_linux_$(./scripts/archtype.sh)_$(./scripts/compute_build_number.sh -f)
           ( cd tmp/node_pkgs/linux/$(./scripts/archtype.sh)
-            find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee - SUMFILE
-            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \;| tee -a - SUMFILE
-            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a - SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \;| tee -a SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a SUMFILE
           )
       - name: Upload artifacts to Github
         uses: actions/upload-artifact@v4
@@ -128,8 +128,8 @@ jobs:
       run: |
         SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))}_darwin_universal_$(./scripts/compute_build_number.sh -f)
         ( cd tmp/node_pkgs/darwin/universal
-          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee - SUMFILE
-          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a - SUMFILE
+          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee SUMFILE
+          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a SUMFILE
         )
     - name: Upload artifacts to Github
       uses: actions/upload-artifact@v4
