@@ -37,9 +37,8 @@ jobs:
           key: libsodium-fork-v2-${{ runner.os }}-${{ hashFiles('crypto/libsodium-fork/**') }}
       - name: Build
         run: |
-          export ALGORAND_DEADLOCK=enable
           export SKIP_GO_INSTALLATION=True
-          scripts/travis/build_test.sh
+          scripts/travis/build.sh --make_cibuild
       # - name: Upload artifact to Github
       #   uses: actions/upload-artifact@v2
       #   with:
@@ -81,19 +80,19 @@ jobs:
           make ci-build
       - name: Generate checksums
         run: |
-          SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))_{{ runner.os }}_${{ runner.arch }}_$(./scripts/compute_build_number.sh -f)}
-          ( cd tmp/node_pkgs/${{ matrix.os }}/${{ runner.arch }}
-            find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; > SUMFILE
-            find . -type f -name "*.tar.gz" -exec sh -c 'sha256sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
-            find . -type f -name "*.tar.gz" -exec sh -c 'sha512sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
+          SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))}_linux_$(./scripts/archtype.sh)_$(./scripts/compute_build_number.sh -f)
+          ( cd tmp/node_pkgs/linux/$(./scripts/archtype.sh)
+            find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee - SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \;| tee -a - SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a - SUMFILE
           )
       - name: Upload artifacts to Github
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           path: |
-            tmp/node_pkgs/${{ matrix.os }}/${{ runner.arch }}/*.tar.gz
-            tmp/node_pkgs/${{ matrix.os }}/${{ runner.arch }}/hashes*
+            tmp/node_pkgs/*/*.tar.gz
+            tmp/node_pkgs/*/hashes*
       # - name: Slack Notification
       #   env:
       #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
@@ -127,11 +126,10 @@ jobs:
         make ci-build-universal
     - name: Generate checksums
       run: |
-        SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))_darwin_universal_$(./scripts/compute_build_number.sh -f)}
+        SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))}_darwin_universal_$(./scripts/compute_build_number.sh -f)
         ( cd tmp/node_pkgs/darwin/universal
-          find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; > SUMFILE
-          find . -type f -name "*.tar.gz" -exec sh -c 'sha256sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
-          find . -type f -name "*.tar.gz" -exec sh -c 'sha512sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; >> SUMFILE
+          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee - SUMFILE
+          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a - SUMFILE
         )
     - name: Upload artifacts to Github
       uses: actions/upload-artifact@v4
