@@ -51,6 +51,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
+          name: build-windows-amd64
           overwrite: true
           path: |
             tmp/node_pkgs/windows/amd64/*.tar.gz
@@ -101,6 +102,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
+          name: build-linux-${{ matrix.os }}
           overwrite: true
           path: |
             tmp/node_pkgs/**/*.tar.gz
@@ -147,6 +149,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         if-no-files-found: error
+        name: build-darwin-universal
         overwrite: true
         path: |
           tmp/node_pkgs/darwin/universal/*.tar.gz
