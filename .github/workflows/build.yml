@@ -39,11 +39,21 @@ jobs:
         run: |
           export SKIP_GO_INSTALLATION=True
           scripts/travis/build.sh --make_cibuild
-      # - name: Upload artifact to Github
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     if-no-files-found: error
-      #     path: $(git ls-files -o | grep -v crypto/libs | grep -v crypto/copies | grep -v crypto/libsodium-fork | grep -v crypto/lib/ | grep -v ^gen/ | grep -v swagger.json.validated | tr "\n" ":")
+      - name: Generate checksums
+        run: |
+          SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))}_windows_amd64_$(./scripts/compute_build_number.sh -f)
+          ( cd tmp/node_pkgs/windows/amd64
+            find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee $SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \;| tee -a $SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a $SUMFILE
+          )
+      - name: Upload artifacts to Github
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          path: |
+            tmp/node_pkgs/windows/amd64/*.tar.gz
+            tmp/node_pkgs/windows/amd64/hashes*
       # - name: Slack Notification
       #   env:
       #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
@@ -82,17 +92,17 @@ jobs:
         run: |
           SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))}_linux_$(./scripts/archtype.sh)_$(./scripts/compute_build_number.sh -f)
           ( cd tmp/node_pkgs/linux/$(./scripts/archtype.sh)
-            find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee SUMFILE
-            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \;| tee -a SUMFILE
-            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee $SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \;| tee -a $SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a $SUMFILE
           )
       - name: Upload artifacts to Github
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           path: |
-            tmp/node_pkgs/*/*.tar.gz
-            tmp/node_pkgs/*/hashes*
+            tmp/node_pkgs/**/*.tar.gz
+            tmp/node_pkgs/**/hashes*
       # - name: Slack Notification
       #   env:
       #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
@@ -128,8 +138,8 @@ jobs:
       run: |
         SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))}_darwin_universal_$(./scripts/compute_build_number.sh -f)
         ( cd tmp/node_pkgs/darwin/universal
-          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee SUMFILE
-          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a SUMFILE
+          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee $SUMFILE
+          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a $SUMFILE
         )
     - name: Upload artifacts to Github
       uses: actions/upload-artifact@v4
