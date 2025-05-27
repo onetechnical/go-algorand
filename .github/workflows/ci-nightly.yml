@@ -6,7 +6,7 @@ on:
       - 'rel/**'
 
 env:
-  CODECOV_TOKEN: "8b4a1f91-f154-4c26-b84c-c9aaa90159c6"  # Same public token from CircleCI config
+  CODECOV_TOKEN: "8b4a1f91-f154-4c26-b84c-c9aaa90159c6"  # Exposed to allow workflow in forks
   ALGORAND_DEADLOCK: enable
   KMD_NOUSB: True
   BUILD_TYPE: integration
