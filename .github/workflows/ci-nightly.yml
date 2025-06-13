@@ -436,7 +436,7 @@ jobs:
           S3_RELEASE_BUCKET: ${{ secrets.S3_RELEASE_BUCKET }}
         timeout-minutes: 20
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/rel/nightly" ]]; then
+          if [[ "${{ github.ref }}" == "refs/heads/rel/test-nightly" ]]; then
             export NIGHTLY_BUILD="true"
           fi
           export TRAVIS_BRANCH="${{ github.ref_name }}"
