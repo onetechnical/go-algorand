@@ -15,7 +15,7 @@ OS_TYPE     := $(shell ./scripts/ostype.sh)
 # overrides for cross-compiling platform-specific binaries
 ifdef CROSS_COMPILE_ARCH
   ARCH := $(CROSS_COMPILE_ARCH)
-  GO_INSTALL := CGO_ENABLED=1 GOOS=$(OS_TYPE) GOARCH=$(ARCH) go build -o $(GOBIN)-$(OS_TYPE)-$(ARCH)
+  GO_INSTALL := CGO_ENABLED=1 GOOS=$(OS_TYPE) GOARCH=$(ARCH) go build -o $(GOBIN)
 else
   GO_INSTALL := go install
 endif
@@ -194,14 +194,27 @@ ifeq ($(OS_TYPE),darwin)
 	# lipo together
 	mkdir -p $(GOBIN)
 	for binary in $$(ls $(GOBIN)-darwin-arm64); do \
+		skip=false; \
+		for nongo_file in $(NONGO_BIN_FILES) $(GOBIN)/update.sh ; do \
+			if [ "$(GOBIN)/$$binary" = "$$nongo_file" ]; then \
+				echo "Skipping non-binary file: $$binary"; \
+				skip=true; \
+				break; \
+			fi; \
+		done; \
+		if [ "$$skip" = "true" ]; then \
+			continue; \
+		fi; \
 		if [ -f $(GOBIN)-darwin-amd64/$$binary ]; then \
 			lipo -create -output $(GOBIN)/$$binary \
-			$(GOBIN)-darwin-arm64/$$binary \
-			$(GOBIN)-darwin-amd64/$$binary; \
+				$(GOBIN)-darwin-arm64/$$binary \
+				$(GOBIN)-darwin-amd64/$$binary; \
 		else \
 			echo "Warning: Binary $$binary exists in arm64 but not in amd64"; \
-		fi \
+		fi; \
 	done
+	# for node_exporter cross-compilation is using universal binary already
+	cp -f $(GOBIN)-darwin-arm64/node_exporter $(GOBIN)/node_exporter
 else
 	echo "OS_TYPE must be darwin for universal builds, skipping"
 endif
@@ -333,8 +346,6 @@ cleango:
 node_exporter: $(GOBIN)/node_exporter
 
 # The recipe for making the node_exporter is by extracting it from the gzipped&tar file.
-# The file is was taken from the S3 cloud and it traditionally stored at
-# /travis-build-artifacts-us-ea-1.algorand.network/algorand/node_exporter/latest/node_exporter-stable-linux-x86_64.tar.gz
 $(GOBIN)/node_exporter:
 	mkdir -p $(GOBIN) && \
 	cd $(GOBIN) && \
