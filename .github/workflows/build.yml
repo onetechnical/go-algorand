@@ -1,12 +1,14 @@
-name: "Build Windows"
+name: "Build"
 on:
   push:
     branches:
       - master
   pull_request:
+    branches:
+      - master
 jobs:
   build-windows:
-    runs-on: windows-2022
+    runs-on: windows-2025
     defaults:
       run:
         shell: msys2 {0}
@@ -35,17 +37,126 @@ jobs:
           key: libsodium-fork-v2-${{ runner.os }}-${{ hashFiles('crypto/libsodium-fork/**') }}
       - name: Build
         run: |
-          export ALGORAND_DEADLOCK=enable
           export SKIP_GO_INSTALLATION=True
-          scripts/travis/build_test.sh
-      # - name: Upload artifact to Github
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     if-no-files-found: error
-      #     path: $(git ls-files -o | grep -v crypto/libs | grep -v crypto/copies | grep -v crypto/libsodium-fork | grep -v crypto/lib/ | grep -v ^gen/ | grep -v swagger.json.validated | tr "\n" ":")
-      - name: Slack Notification
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          scripts/travis/build.sh --make_cibuild
+      - name: Generate checksums
         run: |
-          curl -X POST --data-urlencode "payload={\"text\": \"Build windows failed. ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} \"}" $SLACK_WEBHOOK
-        if: ${{ failure() && (contains(github.ref_name, 'rel/nightly') || contains(github.ref_name, 'rel/beta') || contains(github.ref_name, 'rel/stable') || contains(github.ref_name, 'master')) }}
+          SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))}_windows_amd64_$(./scripts/compute_build_number.sh -f)
+          ( cd tmp/node_pkgs/windows/amd64
+            find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee $SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \;| tee -a $SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a $SUMFILE
+          )
+      - name: Upload artifacts to Github
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: build-windows-amd64
+          overwrite: true
+          path: |
+            tmp/node_pkgs/windows/amd64/*.tar.gz
+            tmp/node_pkgs/windows/amd64/hashes*
+      # - name: Slack Notification
+      #   env:
+      #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      #   run: |
+      #     curl -X POST --data-urlencode "payload={\"text\": \"Build windows failed. ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} \"}" $SLACK_WEBHOOK
+      #   if: ${{ failure() && (contains(github.ref_name, 'rel/nightly') || contains(github.ref_name, 'rel/beta') || contains(github.ref_name, 'rel/stable') || contains(github.ref_name, 'master')) }}
+  build-linux:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ "ubuntu-24.04", "ubuntu-24.04-arm" ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Determine Go version
+        id: go_version
+        run: echo "GO_VERSION=$(./scripts/get_golang_version.sh)" >> $GITHUB_ENV
+      - name: Install golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Restore libsodium from cache
+        id: cache-libsodium
+        uses: actions/cache@v4
+        with:
+          path: crypto/libs
+          key: libsodium-fork-v2-${{ runner.os }}-${{ hashFiles('crypto/libsodium-fork/**') }}
+      - name: Build
+        run: |
+          ./scripts/configure_dev.sh
+          ./scripts/buildtools/install_buildtools.sh
+          make ci-build
+      - name: Generate checksums
+        run: |
+          SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))}_linux_$(./scripts/archtype.sh)_$(./scripts/compute_build_number.sh -f)
+          ( cd tmp/node_pkgs/linux/$(./scripts/archtype.sh)
+            find . -type f -name "*.tar.gz" -exec sh -c 'md5sum "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee $SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \;| tee -a $SUMFILE
+            find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a $SUMFILE
+          )
+      - name: Upload artifacts to Github
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: build-linux-${{ matrix.os }}
+          overwrite: true
+          path: |
+            tmp/node_pkgs/**/*.tar.gz
+            tmp/node_pkgs/**/hashes*
+      # - name: Slack Notification
+      #   env:
+      #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      #   run: |
+      #     curl -X POST --data-urlencode "payload={\"text\": \"Build windows failed. ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} \"}" $SLACK_WEBHOOK
+      #   if: ${{ failure() && (contains(github.ref_name, 'rel/nightly') || contains(github.ref_name, 'rel/beta') || contains(github.ref_name, 'rel/stable') || contains(github.ref_name, 'master')) }}
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Determine Go version
+      id: go_version
+      run: echo "GO_VERSION=$(./scripts/get_golang_version.sh)" >> $GITHUB_ENV
+    - name: Install golang
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    - name: Restore libsodium from cache
+      id: cache-libsodium
+      uses: actions/cache@v4
+      with:
+        path: crypto/libs
+        key: libsodium-fork-v2-${{ runner.os }}-${{ hashFiles('crypto/libsodium-fork/**') }}
+    - name: Build
+      run: |
+        ./scripts/configure_dev.sh
+        ./scripts/buildtools/install_buildtools.sh
+        make ci-build-universal
+    - name: Generate checksums
+      run: |
+        SUMFILE=hashes_${CHANNEL:-$(./scripts/compute_branch_channel.sh $(./scripts/compute_branch.sh))}_darwin_universal_$(./scripts/compute_build_number.sh -f)
+        ( cd tmp/node_pkgs/darwin/universal
+          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 256 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee $SUMFILE
+          find . -type f -name "*.tar.gz" -exec sh -c 'shasum -a 512 "$1" | awk "{print \$1 \"  $1\"}"' _ {} \; | tee -a $SUMFILE
+        )
+    - name: Upload artifacts to Github
+      uses: actions/upload-artifact@v4
+      with:
+        if-no-files-found: error
+        name: build-darwin-universal
+        overwrite: true
+        path: |
+          tmp/node_pkgs/darwin/universal/*.tar.gz
+          tmp/node_pkgs/darwin/universal/hashes*
+      # - name: Slack Notification
+      #   env:
+      #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      #   run: |
+      #     curl -X POST --data-urlencode "payload={\"text\": \"Build windows failed. ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} \"}" $SLACK_WEBHOOK
+      #   if: ${{ failure() && (contains(github.ref_name, 'rel/nightly') || contains(github.ref_name, 'rel/beta') || contains(github.ref_name, 'rel/stable') || contains(github.ref_name, 'master')) }}
