@@ -882,6 +882,7 @@ func initConsensusProtocols() {
 
 	// Base consensus protocol version, v7.
 	v7 := ConsensusParams{
+		EnableSelectF128:         true,
 		UpgradeVoteRounds:        10000,
 		UpgradeThreshold:         9000,
 		DefaultUpgradeWaitRounds: 10000,
